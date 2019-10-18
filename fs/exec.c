@@ -57,6 +57,8 @@
 #include <linux/oom.h>
 #include <linux/compat.h>
 
+#include <trace/events/fs.h>
+
 #include <asm/uaccess.h>
 #include <asm/mmu_context.h>
 #include <asm/tlb.h>
@@ -134,6 +136,10 @@ SYSCALL_DEFINE1(uselib, const char __user *, library)
 	error = -EACCES;
 	if (file->f_path.mnt->mnt_flags & MNT_NOEXEC)
 		goto exit;
+		
+	tmp = getname(library);
+	trace_uselib(tmp->name);
+	putname(tmp);
 
 	fsnotify_open(file);
 
@@ -773,6 +779,9 @@ static struct file *do_open_exec(struct filename *name)
 		goto exit;
 
 	fsnotify_open(file);
+	
+    //    need to be fixed
+	//trace_open_exec(name);
 
 	err = deny_write_access(file);
 	if (err)
